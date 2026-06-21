@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess the Artist - Level 4</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #050505; color: #fff; }
+        .memory-card { aspect-ratio: 1; cursor: pointer; transition: transform 0.3s; position: relative; transform-style: preserve-3d; }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0.5rem; }
+        .card-front { background: #1f2937; border: 2px solid #374151; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .card-back { background-size: cover; background-position: center; transform: rotateY(180deg); border: 2px solid #a855f7; }
+        .memory-card.flipped { transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <nav class="bg-gray-900 border-b border-purple-500 p-4">
+        <div class="max-w-4xl mx-auto flex flex-wrap justify-center gap-4 text-sm font-bold">
+            <a href="index.html" class="text-gray-400 hover:text-white transition">LVL 1: Reveal</a>
+            <a href="level2.html" class="text-gray-400 hover:text-white transition">LVL 2: Unjumble</a>
+            <a href="level3.html" class="text-gray-400 hover:text-white transition">LVL 3: Identify</a>
+            <span class="text-purple-400 border-b-2 border-purple-400">LVL 4: Memory</span>
+            <a href="level5.html" class="text-gray-400 hover:text-white transition">LVL 5: Puzzle</a>
+        </div>
+    </nav>
+
+    <div class="flex-grow flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl text-center">
+            <h2 class="text-2xl font-bold text-purple-400 mb-6 uppercase tracking-widest">Memory Link</h2>
+            <div id="grid" class="grid grid-cols-4 sm:grid-cols-4 gap-2 md:gap-4 max-w-md mx-auto"></div>
+        </div>
+    </div>
+
+    <script>
+        const ARTIST_DATA = [
+        { w: 'SEVENTEEN', id: 'https://upload.wikimedia.org/wikipedia/commons/a/ac/SEVENTEEN%28%EC%84%B8%EB%B8%90%ED%8B%B4%29_-_%27Ready_to_love%27_%EC%9D%91%EC%9B%90%EB%B2%95_3m_25s.jpg' },
+        { w: 'TXT', id: 'https://upload.wikimedia.org/wikipedia/commons/a/a8/Tomorrow_X_Together_at_a_Dior_event%2C_April_18%2C_2025.png' },    
+        { w: 'BABY MONSTER', id: 'https://upload.wikimedia.org/wikipedia/commons/5/57/BabyMonster_Promoting_drip_on_2024112.png' },
+        { w: 'BOYNEXTDOOR', id: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/BoyNextDoor_at_KCON_Japan_2024%2C_%2820240511%29.png' },
+        { w: 'ZEROBASEONE', id: 'https://upload.wikimedia.org/wikipedia/commons/b/be/230513_ZEROBASEONE_%28ZB1%29.jpg' },
+        { w: 'YOASOBI', id: 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Yoasobi_at_Gucci_Cosmos_Exhibition%2C_September_30%2C_2024.jpg' },
+        { w: 'ADO', id: 'Images/ADO.webp' },
+        { w: 'TWICE', id: 'https://upload.wikimedia.org/wikipedia/commons/2/22/Twice_-_Dickies_Arena%2C_2022_%28cropped%29.jpg' },
+        { w: 'BLACKPINK', id: 'https://upload.wikimedia.org/wikipedia/commons/f/f4/Blackpink_Pink_Carpet_Event_4.jpg' },
+        { w: 'STRAY KIDS', id: 'https://upload.wikimedia.org/wikipedia/commons/c/c0/Stray_Kids_in_2026.png' },
+        { w: 'Katy Perry', id: 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Katy_Perry_-_Part_Of_Me_Australian_Premiere_-_June_2012_%2810%29.jpg' },
+        { w: 'Shawn Mendes', id: 'https://upload.wikimedia.org/wikipedia/commons/b/b4/Shawn_Mendes_at_The_Queen%27s_Birthday_Party_%28cropped_2%29.jpg' },
+        { w: 'Michael Jackson', id: 'https://upload.wikimedia.org/wikipedia/commons/3/37/George_H._W._Bush_with_Michael_Jackson_%28cropped_2%29.png' },
+        { w: 'Demi Lovato', id: 'https://upload.wikimedia.org/wikipedia/commons/b/b9/Demi_Lovato_in_2017_cropped_01.jpg' },
+        { w: 'Maroon 5', id: 'https://upload.wikimedia.org/wikipedia/commons/1/19/Maroon_5%2C_2011.jpg' },
+        { w: 'KATSEYE', id: 'https://upload.wikimedia.org/wikipedia/commons/f/fe/%EC%BA%A3%EC%B8%A0%EC%95%84%EC%9D%B4%28KATSEYE%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B6%84%EC%9C%84%EA%B8%B0%EB%A1%9C_%EC%98%AC%ED%82%AC.jpg' },
+        { w: 'IShowSpeed', id: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/IShowSpeed_at_Chinatown_%28Portrait%29_04.jpg' },
+        { w: '(G)I-DLE', id: 'https://upload.wikimedia.org/wikipedia/commons/3/36/20241130_%28G%29I-dle_MMA_2024_Red_Carpet.jpg' },
+        { w: 'NEWJEANS', id: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/NewJeans_X_OLENS_1_%28cropped%29.jpg' },
+        { w: 'BTS', id: 'https://upload.wikimedia.org/wikipedia/commons/0/09/BTS_at_the_White_House_on_May_31%2C_2022_04.jpg' },
+        { w: 'CENTRAL CEE', id: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Central_cee-5.jpg' },
+        { w: 'TAYLOR SWIFT', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png/500px-Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png' },
+        { w: 'MEOVV', id: 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Meovv_250512.jpg' },
+        { w: 'ILLIT', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/%EC%95%84%EC%9D%BC%EB%A6%BF_%28ILLIT%29_%EA%B0%80%EC%9A%94%EA%B4%91%EC%9E%A5_%EC%B6%9C%EA%B7%BC%EA%B8%B8_%281%29.jpg' },
+        { w: 'THE WEEKND', id: 'https://upload.wikimedia.org/wikipedia/commons/9/95/The_Weeknd_Cannes_2023.png' },
+        { w: 'JAY CHOU', id: 'https://upload.wikimedia.org/wikipedia/commons/2/27/Jay_Chou_in_July_2019_%282%29.jpg' },
+        { w: 'MAYDAY', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/X06Taiwan_20061105-36.jpg/500px-X06Taiwan_20061105-36.jpg' },
+        { w: 'BILLIE EILISH', id: 'https://upload.wikimedia.org/wikipedia/commons/3/39/Billie_Eilish_2019_by_Glenn_Francis.jpg' },
+        { w: 'ARIANA GRANDE', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Ariana_Grande_interview_2016.png' },
+        { w: 'LE SSERAFIM', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%28LE_SSERAFIM%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B9%84%EC%A3%BC%EC%96%BC_%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4_LE_SSERAFIM_Music_Bank_%284K%29_03.png/640px-%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%28LE_SSERAFIM%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B9%84%EC%A3%BC%EC%96%BC_%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4_LE_SSERAFIM_Music_Bank_%284K%29_03.png' },
+        { w: 'ATEEZ', id: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Ateez_at_The_World_EP._2_Outlaw_Showcase.jpg' },
+        { w: 'DRAKE', id: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Drake_July_2016.jpg' },
+        { w: 'BRUNO MARS', id: 'https://upload.wikimedia.org/wikipedia/commons/a/af/Bruno_Mars_2010.jpg' },
+        { w: 'AESPA', id: 'https://upload.wikimedia.org/wikipedia/commons/5/57/Aespa_%28%EC%97%90%EC%8A%A4%ED%8C%8C%29_31st_HMA_2024_%284%29.png' },
+        { w: 'Lil Hao', id: 'Images\\Lil Hao.jpg' },
+        { w: 'Hiroyuki Sawano (澤野弘之)', id: 'Images\\Hiroyuki Sawano (澤野弘之).jpg' },
+        { w: 'IU', id: 'Images\\IU.jpg' },
+        { w: 'YENA', id: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/20241004_Choi_Yena_Music_Bank_2024_05.jpg' },
+        { w: 'Liu Yuning (劉宇寧)', id: 'https://upload.wikimedia.org/wikipedia/commons/0/03/Liu_Yuning_%E5%88%98%E5%AE%87%E5%AE%81_20191222_%E6%88%91%E4%BB%AC%E7%9A%84%E6%AD%8C2.jpg' },
+        { w: 'Jungkook (田柾國)', id: 'https://upload.wikimedia.org/wikipedia/commons/8/88/Jeon_Jung-kook_performing_%22Fake_Love%22_during_Love_Yourself_tour_in_Berlin%2C_16_October_2018_06.jpg' },
+        { w: 'Justin Bieber', id: 'https://upload.wikimedia.org/wikipedia/commons/d/da/Justin_Bieber_in_2015.jpg' },
+        { w: 'TOMORROW X TOGETHER', id: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Tomorrow_X_Together_at_a_Dior_event_in_2025_02.jpg' },
+        { w: 'ITZY', id: 'https://upload.wikimedia.org/wikipedia/commons/8/83/Itzy_230102.jpg' },
+        { w: 'MJ116 (頑童)', id: 'Images\\MJ116 (頑童).jpg' },
+        { w: 'Soft Lipa (蛋堡)', id: 'Images\\Soft Lipa (蛋堡).jpg' },
+        { w: 'Bestards (理想混蛋)', id: 'Images\\Bestards (理想混蛋).jpg' },
+        { w: 'Aden Wang (王Aden)', id: 'Images\\Aden Wang (王Aden).jpg' },
+        { w: '9m88', id: 'Images\\9m88.jpg' }
+        ];
+
+        let cards = [], flipped = [], locked = false;
+
+        function init() {
+            const grid = document.getElementById('grid');
+            // Select 8 artists, duplicate to make 16 cards
+            const selected = ARTIST_DATA.sort(() => Math.random() - 0.5).slice(0, 8);
+            cards = [...selected, ...selected].sort(() => Math.random() - 0.5);
+            
+            cards.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'memory-card';
+                card.dataset.name = item.w;
+                card.innerHTML = `
+                    <div class="card-face card-front">🎵</div>
+                    <div class="card-face card-back" style="background-image: url('${item.id}')"></div>
+                `;
+                card.onclick = () => flip(card);
+                grid.appendChild(card);
+            });
+        }
+
+        function flip(card) {
+            if (locked || card.classList.contains('flipped')) return;
+            card.classList.add('flipped');
+            flipped.push(card);
+
+            if (flipped.length === 2) {
+                locked = true;
+                if (flipped[0].dataset.name === flipped[1].dataset.name) {
+                    flipped = []; locked = false;
+                } else {
+                    setTimeout(() => {
+                        flipped[0].classList.remove('flipped');
+                        flipped[1].classList.remove('flipped');
+                        flipped = []; locked = false;
+                    }, 1000);
+                }
+            }
+        }
+        init();
+    </script>
+</body>
+</html>
