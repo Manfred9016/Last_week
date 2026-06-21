@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess the Artist - Level 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #1a202c; color: #e2e8f0; }
+        #image-container {
+            display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr);
+            border-radius: 1rem; overflow: hidden; background-size: cover; background-position: center;
+        }
+        .cover-tile { width: 100%; height: 100%; background-color: #1a202c; transition: opacity 0.4s ease; border: 1px solid #2d3748; }
+        .letter-box { width: 35px; height: 45px; border-bottom: 3px solid #4a5568; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-gray-800 p-4 shadow-lg">
+        <div class="max-w-4xl mx-auto flex flex-wrap justify-center gap-4 text-sm font-bold">
+            <span class="text-cyan-400 border-b-2 border-cyan-400">LVL 1: Reveal</span>
+            <a href="level2.html" class="text-gray-400 hover:text-white transition">LVL 2: Unjumble</a>
+            <a href="level3.html" class="text-gray-400 hover:text-white transition">LVL 3: Ranking</a>
+            <a href="level4.html" class="text-gray-400 hover:text-white transition">LVL 4: Memory</a>
+            <a href="level5.html" class="text-gray-400 hover:text-white transition">LVL 5: Puzzle</a>
+        </div>
+    </nav>
+
+    <div class="flex-grow flex items-center justify-center p-4">
+        <div class="w-full max-w-3xl mx-auto text-center">
+            <h1 class="text-3xl md:text-5xl font-bold mb-4 text-cyan-400 tracking-wider uppercase">Guess the Artist</h1>
+            
+            <div class="flex justify-between items-center mb-6 text-xl font-bold">
+                <div id="score" class="bg-indigo-600 px-4 py-2 rounded">Score: 0</div>
+                <div id="misses" class="bg-red-600 px-4 py-2 rounded">Misses: 0 / 6</div>
+            </div>
+
+            <div id="image-container" class="mb-4 h-48 md:h-80 aspect-video mx-auto max-w-xl shadow-2xl"></div>
+            
+            <!-- Hint & Skip Controls -->
+            <div id="hint-container" class="mb-6 h-16"> 
+                <button id="hint-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition transform hover:scale-105 mx-2">Show Hint</button>
+                <button id="skip-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition transform hover:scale-105 mx-2">Skip (-10 Pts)</button>
+                <p id="hint-display" class="hidden mt-3 text-lg text-yellow-300 font-bold"></p>
+            </div>
+
+            <div id="word-display" class="flex flex-wrap justify-center gap-2 mb-8"></div>
+            <div id="keyboard" class="grid grid-cols-7 md:grid-cols-11 gap-2 max-w-2xl mx-auto"></div>
+            
+            <button id="next-btn" class="hidden mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg mx-auto">Next Round</button>
+        </div>
+    </div>
+
+    <script>
+        // Note: I added a 'hint' property to the data structure so you can provide text clues
+        const ARTIST_DATA = [
+        { w: 'SEVENTEEN', id: 'https://upload.wikimedia.org/wikipedia/commons/a/ac/SEVENTEEN%28%EC%84%B8%EB%B8%90%ED%8B%B4%29_-_%27Ready_to_love%27_%EC%9D%91%EC%9B%90%EB%B2%95_3m_25s.jpg', hint: 'K-pop group known for their synchronized choreography and self-produced music.' },
+        { w: 'TXT', id: 'https://upload.wikimedia.org/wikipedia/commons/a/a8/Tomorrow_X_Together_at_a_Dior_event%2C_April_18%2C_2025.png', hint: 'K-pop group known for their unique style and powerful performances.' },
+        { w: 'BABY MONSTER', id: 'https://upload.wikimedia.org/wikipedia/commons/5/57/BabyMonster_Promoting_drip_on_2024112.png', hint: 'K-pop girl group formed by YG Entertainment.' },
+        { w: 'BOYNEXTDOOR', id: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/BoyNextDoor_at_KCON_Japan_2024%2C_%2820240511%29.png', hint: 'K-pop boy group known for their versatile music and strong stage presence.' },
+        { w: 'ZEROBASEONE', id: 'https://upload.wikimedia.org/wikipedia/commons/b/be/230513_ZEROBASEONE_%28ZB1%29.jpg', hint: 'K-pop boy group formed by JYP Entertainment.' },
+        { w: 'YOASOBI', id: 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Yoasobi_at_Gucci_Cosmos_Exhibition%2C_September_30%2C_2024.jpg', hint: 'J-pop duo known for their unique sound and emotional lyrics.' },
+        { w: 'ADO', id: 'Images/ADO.webp', hint: 'Japanese singer-songwriter known for her unique vocal style.' },
+        { w: 'TWICE', id: 'https://upload.wikimedia.org/wikipedia/commons/2/22/Twice_-_Dickies_Arena%2C_2022_%28cropped%29.jpg', hint: 'K-pop girl group known for their catchy songs and energetic performances.' },
+        { w: 'BLACKPINK', id: 'https://upload.wikimedia.org/wikipedia/commons/f/f4/Blackpink_Pink_Carpet_Event_4.jpg', hint: 'K-pop girl group known for their powerful vocals and dynamic stage presence.' },
+        { w: 'STRAY KIDS', id: 'https://upload.wikimedia.org/wikipedia/commons/c/c0/Stray_Kids_in_2026.png', hint: 'K-pop boy group known for their innovative music and impressive choreography.' },
+        { w: 'Katy Perry', id: 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Katy_Perry_-_Part_Of_Me_Australian_Premiere_-_June_2012_%2810%29.jpg', hint: 'American singer-songwriter known for her pop hits and bold fashion choices.' },
+        { w: 'Shawn Mendes', id: 'https://upload.wikimedia.org/wikipedia/commons/b/b4/Shawn_Mendes_at_The_Queen%27s_Birthday_Party_%28cropped_2%29.jpg', hint: 'Canadian singer-songwriter known for his heartfelt ballads and smooth vocals.' },
+        { w: 'Michael Jackson', id: 'https://upload.wikimedia.org/wikipedia/commons/3/37/George_H._W._Bush_with_Michael_Jackson_%28cropped_2%29.png', hint: 'American singer, songwriter, and dancer known as the "King of Pop".' },
+        { w: 'Demi Lovato', id: 'https://upload.wikimedia.org/wikipedia/commons/b/b9/Demi_Lovato_in_2017_cropped_01.jpg', hint: 'American singer and actress known for her powerful voice and candid personality.' },
+        { w: 'Maroon 5', id: 'https://upload.wikimedia.org/wikipedia/commons/1/19/Maroon_5%2C_2011.jpg', hint: 'American pop rock band known for their radio-friendly hits and charismatic frontman.' },
+        { w: 'KATSEYE', id: 'https://upload.wikimedia.org/wikipedia/commons/f/fe/%EC%BA%A3%EC%B8%A0%EC%95%84%EC%9D%B4%28KATSEYE%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B6%84%EC%9C%84%EA%B8%B0%EB%A1%9C_%EC%98%AC%ED%82%AC.jpg', hint: 'K-pop girl group formed by SM Entertainment.' },
+        { w: 'IShowSpeed', id: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/IShowSpeed_at_Chinatown_%28Portrait%29_04.jpg', hint: 'K-pop boy group known for their unique style and impressive dance skills.' },
+        { w: '(G)I-DLE', id: 'https://upload.wikimedia.org/wikipedia/commons/3/36/20241130_%28G%29I-dle_MMA_2024_Red_Carpet.jpg', hint: 'K-pop girl group known for their empowering messages and dynamic performances.' },
+        { w: 'NEWJEANS', id: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/NewJeans_X_OLENS_1_%28cropped%29.jpg', hint: 'K-pop girl group known for their minimalist style and catchy hooks.' },
+        { w: 'BTS', id: 'https://upload.wikimedia.org/wikipedia/commons/0/09/BTS_at_the_White_House_on_May_31%2C_2022_04.jpg', hint: 'K-pop boy group known for their social activism and global influence.' },
+        { w: 'CENTRAL CEE', id: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Central_cee-5.jpg', hint: 'British rapper known for his distinctive flow and lyrical prowess.' },
+        { w: 'TAYLOR SWIFT', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png/500px-Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png', hint: 'American singer-songwriter known for her storytelling and acoustic sound.' },
+        { w: 'MEOVV', id: 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Meovv_250512.jpg', hint: 'K-pop girl group known for their powerful vocals and dynamic performances.' },
+        { w: 'ILLIT', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/%EC%95%84%EC%9D%BC%EB%A6%BF_%28ILLIT%29_%EA%B0%80%EC%9A%94%EA%B4%91%EC%9E%A5_%EC%B6%9C%EA%B7%BC%EA%B8%B8_%281%29.jpg', hint: 'K-pop girl group known for their cute image and catchy songs.' },
+        { w: 'THE WEEKND', id: 'https://upload.wikimedia.org/wikipedia/commons/9/95/The_Weeknd_Cannes_2023.png', hint: 'Canadian singer-songwriter known for his R&B-influenced sound and dark aesthetic.' },
+        { w: 'JAY CHOU', id: 'https://upload.wikimedia.org/wikipedia/commons/2/27/Jay_Chou_in_July_2019_%282%29.jpg', hint: 'Taiwanese singer-songwriter known for his unique blend of pop, rock, and traditional Chinese music.' },
+        { w: 'MAYDAY', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/X06Taiwan_20061105-36.jpg/500px-X06Taiwan_20061105-36.jpg', hint: 'Taiwanese rock band known for their energetic performances and socially conscious lyrics.' },
+        { w: 'BILLIE EILISH', id: 'https://upload.wikimedia.org/wikipedia/commons/3/39/Billie_Eilish_2019_by_Glenn_Francis.jpg', hint: 'American singer-songwriter known for her unique vocal style and dark, atmospheric sound.' },
+        { w: 'ARIANA GRANDE', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Ariana_Grande_interview_2016.png', hint: 'American singer and actress known for her powerful vocals and wide vocal range.' },
+        { w: 'LE SSERAFIM', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%28LE_SSERAFIM%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B9%84%EC%A3%BC%EC%96%BC_%ED%8C%8F%EB%A1%A0_LE_SSERAFIM_Music_Bank_%284K%29_03.png/640px-%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%28LE_SSERAFIM%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B9%84%EC%A3%BC%EC%96%BC_%ED%8C%8F%EB%A1%A0_LE_SSERAFIM_Music_Bank_%284K%29_03.png', hint: 'K-pop girl group known for their empowering messages and dynamic performances.' },
+        { w: 'Lil Hao', id: 'Images\\Lil Hao.jpg' , hint: 'Chinese rapper known for his unique style and lyrical prowess.' },
+        { w: 'Hiroyuki Sawano (澤野弘之)', id: 'Images\\Hiroyuki Sawano (澤野弘之).jpg' , hint: 'Japanese composer known for his work on anime soundtracks and dramatic orchestral pieces.' },
+        { w: 'IU', id: 'Images\\IU.jpg' , hint: 'South Korean singer-songwriter known for her sweet vocals and heartfelt lyrics.' },
+        { w: 'YENA', id: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/20241004_Choi_Yena_Music_Bank_2024_05.jpg', hint: 'South Korean singer-songwriter known for her powerful vocals and dynamic performances.' },
+        { w: 'Liu Yuning (劉宇寧)', id: 'https://upload.wikimedia.org/wikipedia/commons/0/03/Liu_Yuning_%E5%88%98%E5%AE%87%E5%AE%81_20191222_%E6%88%91%E4%BB%AC%E7%9A%84%E6%AD%8C2.jpg', hint: 'Chinese singer-songwriter known for his versatile voice and emotional performances.' },
+        { w: 'Jungkook (田柾國)', id: 'https://upload.wikimedia.org/wikipedia/commons/8/88/Jeon_Jung-kook_performing_%22Fake_Love%22_during_Love_Yourself_tour_in_Berlin%2C_16_October_2018_06.jpg', hint: 'South Korean singer and dancer known for his impressive vocal range and stage presence.' },
+        { w: 'Justin Bieber', id: 'https://upload.wikimedia.org/wikipedia/commons/d/da/Justin_Bieber_in_2015.jpg', hint: 'Canadian singer-songwriter known for his pop hits and charismatic personality.' },
+        { w: 'TOMORROW X TOGETHER', id: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Tomorrow_X_Together_at_a_Dior_event_in_2025_02.jpg', hint: 'K-pop boy group known for their unique style and impressive dance skills.' },
+        { w: 'ITZY', id: 'https://upload.wikimedia.org/wikipedia/commons/8/83/Itzy_230102.jpg', hint: 'K-pop girl group known for their energetic performances and catchy songs.' },
+        { w: 'MJ116 (頑童)', id: 'Images\\MJ116 (頑童).jpg' , hint: 'Chinese hip-hop group known for their innovative style and social commentary.' },
+        { w: 'Soft Lipa (蛋堡)', id: 'Images\\Soft Lipa (蛋堡).jpg' , hint: 'Chinese rapper and songwriter known for his unique flow and lyrical prowess.' },
+        { w: 'Bestards (理想混蛋)', id: 'Images\\Bestards (理想混蛋).jpg' , hint: 'Chinese rock band known for their rebellious spirit and socially conscious lyrics.' },
+        { w: 'Aden Wang (王Aden)', id: 'Images\\Aden Wang (王Aden).jpg' , hint: 'Chinese singer-songwriter known for his emotional depth and melodic sensibility.' },
+        { w: '9m88', id: 'Images\\9m88.jpg' , hint: 'Chinese rapper known for his aggressive style and powerful delivery.' }
+        ];
+
+        let state = { score: 0, currentRound: 0, data: [...ARTIST_DATA].sort(() => Math.random() - 0.5) };
+
+        // DOM Elements
+        const hintBtn = document.getElementById('hint-btn');
+        const skipBtn = document.getElementById('skip-btn');
+        const hintDisplay = document.getElementById('hint-display');
+        const nextBtn = document.getElementById('next-btn');
+
+        function startRound() {
+            if(state.currentRound >= state.data.length) return alert('Level 1 Complete! Move to Level 2.');
+            
+            const artist = state.data[state.currentRound];
+            state.word = artist.w.toUpperCase().replace(/[^A-Z0-9\s()]/gi, '');
+            state.guessed = new Set([' ', '(', ')']);
+            state.misses = 0;
+            state.gameOver = false;
+            
+            // Reset UI for new round
+            nextBtn.classList.add('hidden');
+            hintDisplay.classList.add('hidden');
+            hintDisplay.textContent = '';
+            hintBtn.disabled = false;
+            hintBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            skipBtn.disabled = false;
+            skipBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            setupImage(artist.id);
+            renderWord();
+            renderKeyboard();
+            updateDisplay();
+        }
+
+        function setupImage(url) {
+            const container = document.getElementById('image-container');
+            container.innerHTML = '';
+            container.style.backgroundImage = `url('${url}')`;
+            state.tiles = [];
+            for (let i = 0; i < 100; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'cover-tile';
+                state.tiles.push(tile);
+                container.appendChild(tile);
+            }
+            state.tiles.sort(() => Math.random() - 0.5);
+            state.revealRate = Math.ceil(100 / new Set(state.word.replace(/[^A-Z0-9]/g, '')).size);
+        }
+
+        function renderWord() {
+            const container = document.getElementById('word-display');
+            container.innerHTML = '';
+            state.word.split(' ').forEach(w => {
+                const row = document.createElement('div');
+                row.className = 'flex flex-wrap justify-center gap-2 mb-2';
+                w.split('').forEach(char => {
+                    const box = document.createElement('div');
+                    box.className = 'letter-box text-cyan-300 font-bold';
+                    box.textContent = state.guessed.has(char) ? char : '';
+                    row.appendChild(box);
+                });
+                container.appendChild(row);
+            });
+        }
+
+        function renderKeyboard() {
+            const container = document.getElementById('keyboard');
+            container.innerHTML = '';
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('').forEach(char => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-gray-700 hover:bg-cyan-500 rounded p-2 text-lg font-bold disabled:opacity-50 transition';
+                btn.textContent = char;
+                btn.onclick = () => handleGuess(char, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function handleGuess(char, btn) {
+            if(state.gameOver || state.guessed.has(char)) return;
+            state.guessed.add(char);
+            btn.disabled = true;
+
+            if(state.word.includes(char)) {
+                btn.classList.replace('bg-gray-700', 'bg-green-600');
+                btn.classList.remove('hover:bg-cyan-500');
+                for(let i=0; i<state.revealRate; i++) {
+                    const tile = state.tiles.pop();
+                    if(tile) tile.style.opacity = '0';
+                }
+            } else {
+                btn.classList.replace('bg-gray-700', 'bg-red-600');
+                btn.classList.remove('hover:bg-cyan-500');
+                state.misses++;
+            }
+            
+            renderWord();
+            updateDisplay();
+            checkWin();
+        }
+
+        function showHint() {
+            if(state.gameOver || hintBtn.disabled) return;
+            const artist = state.data[state.currentRound];
+            hintDisplay.textContent = artist.hint || "No hint available for this artist!";
+            hintDisplay.classList.remove('hidden');
+            hintBtn.disabled = true;
+            hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        function skipRound() {
+            if(state.gameOver) return;
+            
+            state.score -= 10;
+            if(state.score < 0) state.score = 0; // Prevent negative scores if preferred
+
+            state.gameOver = true;
+            state.tiles.forEach(t => t.style.opacity = '0'); // Reveal full image
+            state.word.split('').forEach(c => state.guessed.add(c)); // Reveal full word
+            
+            renderWord();
+            updateDisplay();
+            
+            hintBtn.disabled = true;
+            skipBtn.disabled = true;
+            hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            skipBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            nextBtn.classList.remove('hidden');
+        }
+
+        function updateDisplay() {
+            document.getElementById('score').textContent = `Score: ${state.score}`;
+            document.getElementById('misses').textContent = `Misses: ${state.misses} / 6`;
+        }
+
+        function checkWin() {
+            const won = state.word.split('').every(c => state.guessed.has(c));
+            if(won || state.misses >= 6) {
+                state.gameOver = true;
+                if(won) state.score += 10;
+                
+                state.tiles.forEach(t => t.style.opacity = '0'); // Reveal full image
+                if(!won) state.word.split('').forEach(c => state.guessed.add(c)); // Reveal full word
+                
+                renderWord();
+                updateDisplay();
+                
+                hintBtn.disabled = true;
+                skipBtn.disabled = true;
+                hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                skipBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                nextBtn.classList.remove('hidden');
+            }
+        }
+
+        // Event Listeners for new buttons
+        hintBtn.addEventListener('click', showHint);
+        skipBtn.addEventListener('click', skipRound);
+        nextBtn.onclick = () => { state.currentRound++; startRound(); };
+
+        // Initialize Game
+        startRound();
+    </script>
+</body>
+</html>
