@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guess the Artist - Level 3</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #f0f4f8;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    h1 {
+      margin-bottom: 10px;
+      color: #1e293b;
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #475569;
+      font-weight: bold;
+    }
+    .game-wrapper {
+      padding: 20px;
+      flex-grow: 1;
+    }
+    .game-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    .options-container {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive Grid */
+      gap: 15px;
+    }
+    .artist-option {
+      height: 84px;
+      box-sizing: border-box;
+      background-color: white;
+      padding: 10px;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      cursor: pointer;
+      transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out, transform 0.1s ease;
+    }
+    .artist-option:hover {
+        border-color: #94a3b8;
+    }
+    .artist-option.selected {
+        transform: scale(1.02);
+    }
+    .artist-option img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      pointer-events: none;
+      background-color: #eee;
+    }
+    .artist-label {
+      flex-grow: 1;
+      text-align: left;
+      pointer-events: none;
+      font-weight: 600;
+      font-size: 16px;
+      color: #334155;
+    }
+
+    /* Feedback Styles */
+    .artist-option.correct {
+      border-color: #22c55e;
+      background-color: #dcfce7;
+    }
+    .artist-option.incorrect {
+      border-color: #ef4444;
+      background-color: #fee2e2;
+    }
+    .options-container.disabled .artist-option:not(.selected) {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .options-container.disabled .artist-option.correct {
+        opacity: 1;
+    }
+
+    .button-group {
+      margin-top: 30px;
+    }
+    .button-group button {
+      padding: 12px 25px;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 8px;
+      border: none;
+      background-color: #3b82f6;
+      color: white;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+    .button-group button:hover {
+      background-color: #2563eb;
+    }
+    .button-group button:disabled {
+      background-color: #9ca3af;
+      cursor: not-allowed;
+    }
+    #result-container {
+        margin-top: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #1e293b;
+        min-height: 36px;
+    }
+    #final-feedback-container {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    #final-feedback-container img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        max-height: 200px;
+        object-fit: contain;
+    }
+    #final-feedback-caption {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #1e293b;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Shared Navigation -->
+  <nav class="bg-gray-900 border-b border-pink-500 p-4">
+    <div class="max-w-4xl mx-auto flex flex-wrap justify-center gap-4 text-sm font-bold">
+        <a href="index.html" class="text-gray-400 hover:text-white transition">LVL 1: Reveal</a>
+        <a href="level2.html" class="text-gray-400 hover:text-white transition">LVL 2: Unjumble</a>
+        <span class="text-pink-400 border-b-2 border-pink-400">LVL 3: Ranking</span>
+        <a href="level4.html" class="text-gray-400 hover:text-white transition">LVL 4: Memory</a>
+        <a href="level5.html" class="text-gray-400 hover:text-white transition">LVL 5: Puzzle</a>
+    </div>
+  </nav>
+
+  <div class="game-wrapper">
+    <div class="game-container">
+      <h1 class="text-3xl font-bold">Guess the Artist Rank</h1>
+      <h2 id="question-text" class="text-xl">Loading...</h2>
+      
+      <ul id="options-list" class="options-container">
+        </ul>
+
+      <div id="result-container"></div>
+      <div id="final-feedback-container"></div>
+
+      <div class="button-group">
+        <button id="next-button" onclick="nextQuestion()" disabled>Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ARTIST_DATA = [
+        { w: 'SEVENTEEN', id: 'https://upload.wikimedia.org/wikipedia/commons/a/ac/SEVENTEEN%28%EC%84%B8%EB%B8%90%ED%8B%B4%29_-_%27Ready_to_love%27_%EC%9D%91%EC%9B%90%EB%B2%95_3m_25s.jpg' },
+        { w: 'TXT', id: 'https://upload.wikimedia.org/wikipedia/commons/a/a8/Tomorrow_X_Together_at_a_Dior_event%2C_April_18%2C_2025.png' },    
+        { w: 'BABY MONSTER', id: 'https://upload.wikimedia.org/wikipedia/commons/5/57/BabyMonster_Promoting_drip_on_2024112.png' },
+        { w: 'BOYNEXTDOOR', id: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/BoyNextDoor_at_KCON_Japan_2024%2C_%2820240511%29.png' },
+        { w: 'ZEROBASEONE', id: 'https://upload.wikimedia.org/wikipedia/commons/b/be/230513_ZEROBASEONE_%28ZB1%29.jpg' },
+        { w: 'YOASOBI', id: 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Yoasobi_at_Gucci_Cosmos_Exhibition%2C_September_30%2C_2024.jpg' },
+        { w: 'ADO', id: 'Images/ADO.webp' },
+        { w: 'TWICE', id: 'https://upload.wikimedia.org/wikipedia/commons/2/22/Twice_-_Dickies_Arena%2C_2022_%28cropped%29.jpg' },
+        { w: 'BLACKPINK', id: 'https://upload.wikimedia.org/wikipedia/commons/f/f4/Blackpink_Pink_Carpet_Event_4.jpg' },
+        { w: 'STRAY KIDS', id: 'https://upload.wikimedia.org/wikipedia/commons/c/c0/Stray_Kids_in_2026.png' },
+        { w: 'Katy Perry', id: 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Katy_Perry_-_Part_Of_Me_Australian_Premiere_-_June_2012_%2810%29.jpg' },
+        { w: 'Shawn Mendes', id: 'https://upload.wikimedia.org/wikipedia/commons/b/b4/Shawn_Mendes_at_The_Queen%27s_Birthday_Party_%28cropped_2%29.jpg' },
+        { w: 'Michael Jackson', id: 'https://upload.wikimedia.org/wikipedia/commons/3/37/George_H._W._Bush_with_Michael_Jackson_%28cropped_2%29.png' },
+        { w: 'Demi Lovato', id: 'https://upload.wikimedia.org/wikipedia/commons/b/b9/Demi_Lovato_in_2017_cropped_01.jpg' },
+        { w: 'Maroon 5', id: 'https://upload.wikimedia.org/wikipedia/commons/1/19/Maroon_5%2C_2011.jpg' },
+        { w: 'KATSEYE', id: 'https://upload.wikimedia.org/wikipedia/commons/f/fe/%EC%BA%A3%EC%B8%A0%EC%95%84%EC%9D%B4%28KATSEYE%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B6%84%EC%9C%84%EA%B8%B0%EB%A1%9C_%EC%98%AC%ED%82%AC.jpg' },
+        { w: 'IShowSpeed', id: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/IShowSpeed_at_Chinatown_%28Portrait%29_04.jpg' },
+        { w: '(G)I-DLE', id: 'https://upload.wikimedia.org/wikipedia/commons/3/36/20241130_%28G%29I-dle_MMA_2024_Red_Carpet.jpg' },
+        { w: 'NEWJEANS', id: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/NewJeans_X_OLENS_1_%28cropped%29.jpg' },
+        { w: 'BTS', id: 'https://upload.wikimedia.org/wikipedia/commons/0/09/BTS_at_the_White_House_on_May_31%2C_2022_04.jpg' },
+        { w: 'CENTRAL CEE', id: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Central_cee-5.jpg' },
+        { w: 'TAYLOR SWIFT', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png/500px-Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png' },
+        { w: 'MEOVV', id: 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Meovv_250512.jpg' },
+        { w: 'ILLIT', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/%EC%95%84%EC%9D%BC%EB%A6%BF_%28ILLIT%29_%EA%B0%80%EC%9A%94%EA%B4%91%EC%9E%A5_%EC%B6%9C%EA%B7%BC%EA%B8%B8_%281%29.jpg' },
+        { w: 'THE WEEKND', id: 'https://upload.wikimedia.org/wikipedia/commons/9/95/The_Weeknd_Cannes_2023.png' },
+        { w: 'JAY CHOU', id: 'https://upload.wikimedia.org/wikipedia/commons/2/27/Jay_Chou_in_July_2019_%282%29.jpg' },
+        { w: 'MAYDAY', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/X06Taiwan_20061105-36.jpg/500px-X06Taiwan_20061105-36.jpg' },
+        { w: 'BILLIE EILISH', id: 'https://upload.wikimedia.org/wikipedia/commons/3/39/Billie_Eilish_2019_by_Glenn_Francis.jpg' },
+        { w: 'ARIANA GRANDE', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Ariana_Grande_interview_2016.png' },
+        { w: 'LE SSERAFIM', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%28LE_SSERAFIM%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B9%84%EC%A3%BC%EC%96%BC_%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4_LE_SSERAFIM_Music_Bank_%284K%29_03.png/640px-%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%28LE_SSERAFIM%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B9%84%EC%A3%BC%EC%96%BC_%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4_LE_SSERAFIM_Music_Bank_%284K%29_03.png' },
+        { w: 'ATEEZ', id: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Ateez_at_The_World_EP._2_Outlaw_Showcase.jpg' },
+        { w: 'DRAKE', id: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Drake_July_2016.jpg' },
+        { w: 'BRUNO MARS', id: 'https://upload.wikimedia.org/wikipedia/commons/a/af/Bruno_Mars_2010.jpg' },
+        { w: 'AESPA', id: 'https://upload.wikimedia.org/wikipedia/commons/5/57/Aespa_%28%EC%97%90%EC%8A%A4%ED%8C%8C%29_31st_HMA_2024_%284%29.png' },
+        { w: 'Lil Hao', id: 'Images\\Lil Hao.jpg' },
+        { w: 'Hiroyuki Sawano (澤野弘之)', id: 'Images\\Hiroyuki Sawano (澤野弘之).jpg' },
+        { w: 'IU', id: 'Images\\IU.jpg' },
+        { w: 'YENA', id: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/20241004_Choi_Yena_Music_Bank_2024_05.jpg' },
+        { w: 'Liu Yuning (劉宇寧)', id: 'https://upload.wikimedia.org/wikipedia/commons/0/03/Liu_Yuning_%E5%88%98%E5%AE%87%E5%AE%81_20191222_%E6%88%91%E4%BB%AC%E7%9A%84%E6%AD%8C2.jpg' },
+        { w: 'Jungkook (田柾國)', id: 'https://upload.wikimedia.org/wikipedia/commons/8/88/Jeon_Jung-kook_performing_%22Fake_Love%22_during_Love_Yourself_tour_in_Berlin%2C_16_October_2018_06.jpg' },
+        { w: 'Justin Bieber', id: 'https://upload.wikimedia.org/wikipedia/commons/d/da/Justin_Bieber_in_2015.jpg' },
+        { w: 'TOMORROW X TOGETHER', id: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Tomorrow_X_Together_at_a_Dior_event_in_2025_02.jpg' },
+        { w: 'ITZY', id: 'https://upload.wikimedia.org/wikipedia/commons/8/83/Itzy_230102.jpg' },
+        { w: 'MJ116 (頑童)', id: 'Images\\MJ116 (頑童).jpg' },
+        { w: 'Soft Lipa (蛋堡)', id: 'Images\\Soft Lipa (蛋堡).jpg' },
+        { w: 'Bestards (理想混蛋)', id: 'Images\\Bestards (理想混蛋).jpg' },
+        { w: 'Aden Wang (王Aden)', id: 'Images\\Aden Wang (王Aden).jpg' },
+        { w: '9m88', id: 'Images\\9m88.jpg' }
+      ];
+
+      // --- STATE VARIABLES ---
+      let currentIdx = 0;
+      let score = 0;
+
+      // --- DOM ELEMENTS ---
+      const questionEl = document.getElementById('question-text');
+      const optionsList = document.getElementById('options-list');
+      const nextButton = document.getElementById('next-button');
+      const resultContainer = document.getElementById('result-container');
+      const finalFeedbackContainer = document.getElementById('final-feedback-container'); 
+
+      // --- FEEDBACK IMAGES ---
+      const HIGH_SCORE_IMAGE = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-gdReklsKXOqjBMFAr5QxG7sCdGsmSjzm5Q&s';
+      const LOW_SCORE_IMAGE = 'https://i.imgflip.com/2sjkfa.jpg';
+      
+      // --- FUNCTIONS ---
+
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      function displayQuestion() {
+        // Reset UI
+        resultContainer.textContent = '';
+        finalFeedbackContainer.innerHTML = '';
+        optionsList.innerHTML = '';
+        optionsList.classList.remove('disabled');
+        nextButton.disabled = true;
+
+        if (currentIdx >= ARTIST_DATA.length) {
+            showFinalScore();
+            return;
+        }
+
+        const correctArtist = ARTIST_DATA[currentIdx];
+        
+        // --- GAME MODE: RANKING (Sequential) ---
+        // Questions will appear in the exact order of the list: NF -> Baby Monster -> etc.
+        questionEl.innerHTML = `Which artist is Rank #${currentIdx + 1}?`;
+
+        // Get 5 random distractors (unique)
+        const others = ARTIST_DATA.filter(a => a.w !== correctArtist.w);
+        const shuffledOthers = shuffleArray(others).slice(0, 7); 
+
+        // Combine and shuffle
+        const finalOptions = shuffleArray([correctArtist, ...shuffledOthers]);
+
+        // Render options
+        finalOptions.forEach(artist => {
+          const li = document.createElement('li');
+          li.className = 'artist-option';
+          li.dataset.name = artist.w;
+          li.innerHTML = `
+            <img src="${artist.id}" alt="${artist.w}" onerror="this.src='https://placehold.co/60x60/f0f4f8/9ca3af?text=?'">
+            <span class="artist-label">${artist.w}</span>
+          `;
+          li.addEventListener('click', handleOptionSelect);
+          optionsList.appendChild(li);
+        });
+      }
+
+      function handleOptionSelect(event) {
+        const selectedOption = event.currentTarget;
+        const selectedName = selectedOption.dataset.name;
+        const correctName = ARTIST_DATA[currentIdx].w;
+
+        // Disable grid
+        optionsList.classList.add('disabled');
+        selectedOption.classList.add('selected');
+
+        if (selectedName === correctName) {
+          score++;
+          selectedOption.classList.add('correct');
+          resultContainer.textContent = 'Correct!';
+          resultContainer.style.color = '#166534';
+        } else {
+          selectedOption.classList.add('incorrect');
+          resultContainer.textContent = 'Incorrect!';
+          resultContainer.style.color = '#991b1b';
+          
+          // Highlight correct one
+          const correctEl = optionsList.querySelector(`[data-name="${correctName}"]`);
+          if (correctEl) {
+            correctEl.classList.add('correct');
+          }
+        }
+
+        // Enable next button
+        nextButton.disabled = false;
+        if(currentIdx === ARTIST_DATA.length - 1){
+            nextButton.textContent = "See Score";
+        } else {
+            nextButton.textContent = "Next";
+        }
+      }
+
+      function showFinalScore() {
+        document.querySelector('h1').style.display = 'none';
+        questionEl.style.display = 'none';
+        optionsList.style.display = 'none';
+        nextButton.style.display = 'none';
+        resultContainer.innerHTML = '';
+
+        const totalQuestions = ARTIST_DATA.length;
+        const percentage = (score / totalQuestions) * 100;
+
+        let finalImageSrc = '';
+        let finalCaption = '';
+
+        if (percentage >= 80) {
+            finalImageSrc = HIGH_SCORE_IMAGE;
+            finalCaption = 'Great job! You know your music!';
+        } else {
+            finalImageSrc = LOW_SCORE_IMAGE;
+            finalCaption = `Final Score: ${score} / ${totalQuestions}`;
+        }
+
+        finalFeedbackContainer.innerHTML = `
+            <img src="${finalImageSrc}" alt="Final Score">
+            <div id="final-feedback-caption">${finalCaption}</div>
+            <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; cursor:pointer; background:#3b82f6; color:white; border:none; border-radius:8px;">Play Again</button>
+        `;
+      }
+
+      window.nextQuestion = function() {
+        currentIdx++;
+        displayQuestion();
+      };
+
+      // Start
+      displayQuestion();
+    });
+  </script>
+</body>
+</html>
