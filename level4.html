@@ -4,92 +4,122 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guess the Artist - Level 4</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #050505; color: #fff; }
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e2e8f0; 
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
         .memory-card { aspect-ratio: 1; cursor: pointer; transition: transform 0.3s; position: relative; transform-style: preserve-3d; }
         .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0.5rem; }
-        .card-front { background: #1f2937; border: 2px solid #374151; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
-        .card-back { background-size: cover; background-position: center; transform: rotateY(180deg); border: 2px solid #a855f7; }
+        
+        .card-front { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(5px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem; /* Reduced font size for smaller cards */
+            box-shadow: inset 0 0 20px rgba(236, 72, 153, 0.2);
+            transition: all 0.3s ease;
+        }
+        .memory-card:hover .card-front {
+            border-color: #06b6d4;
+            box-shadow: inset 0 0 20px rgba(6, 182, 212, 0.4), 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        .card-back { 
+            background-size: cover; background-position: center; transform: rotateY(180deg); 
+            border: 2px solid #06b6d4; 
+            box-shadow: 0 0 10px rgba(6,182,212,0.5);
+        }
         .memory-card.flipped { transform: rotateY(180deg); }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
-    <nav class="bg-gray-900 border-b border-purple-500 p-4">
-        <div class="max-w-4xl mx-auto flex flex-wrap justify-center gap-4 text-sm font-bold">
-            <a href="index.html" class="text-gray-400 hover:text-white transition">LVL 1: Reveal</a>
-            <a href="level2.html" class="text-gray-400 hover:text-white transition">LVL 2: Unjumble</a>
-            <a href="level3.html" class="text-gray-400 hover:text-white transition">LVL 3: Identify</a>
-            <span class="text-purple-400 border-b-2 border-purple-400">LVL 4: Memory</span>
-            <a href="level5.html" class="text-gray-400 hover:text-white transition">LVL 5: Puzzle</a>
+<body class="flex flex-col min-h-screen relative overflow-x-hidden">
+
+    <div class="fixed top-0 left-1/4 w-96 h-96 bg-pink-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse pointer-events-none z-0"></div>
+    <div class="fixed bottom-0 right-1/4 w-96 h-96 bg-cyan-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse pointer-events-none z-0"></div>
+
+    <nav class="glass sticky top-0 z-50 p-4 shadow-2xl">
+        <div class="max-w-4xl mx-auto flex flex-wrap justify-center gap-6 text-sm font-bold tracking-widest uppercase">
+            <a href="index.html" class="text-gray-400 hover:text-cyan-400 transition pb-1">LVL 1: Reveal</a>
+            <a href="level2.html" class="text-gray-400 hover:text-cyan-400 transition pb-1">LVL 2: Unjumble</a>
+            <a href="level3.html" class="text-gray-400 hover:text-cyan-400 transition pb-1">LVL 3: Ranking</a>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 border-b-2 border-pink-500 pb-1">LVL 4: Memory</span>
+            <a href="level5.html" class="text-gray-400 hover:text-cyan-400 transition pb-1">LVL 5: Puzzle</a>
         </div>
     </nav>
 
-    <div class="flex-grow flex items-center justify-center p-4">
-        <div class="w-full max-w-2xl text-center">
-            <h2 class="text-2xl font-bold text-purple-400 mb-6 uppercase tracking-widest">Memory Link</h2>
-            <div id="grid" class="grid grid-cols-4 sm:grid-cols-4 gap-2 md:gap-4 max-w-md mx-auto"></div>
+    <div class="flex-grow flex items-center justify-center p-4 relative z-10 w-full">
+        <div class="w-full max-w-5xl text-center glass p-6 md:p-8 rounded-2xl border border-white/10 shadow-2xl">
+            <h2 class="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500 mb-6 uppercase tracking-widest drop-shadow-md">Memory Link</h2>
+            
+            <div id="grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-8 gap-2 md:gap-3 mx-auto perspective-1000"></div>
         </div>
     </div>
 
     <script>
+     
         const ARTIST_DATA = [
-        { w: 'SEVENTEEN', id: 'https://upload.wikimedia.org/wikipedia/commons/a/ac/SEVENTEEN%28%EC%84%B8%EB%B8%90%ED%8B%B4%29_-_%27Ready_to_love%27_%EC%9D%91%EC%9B%90%EB%B2%95_3m_25s.jpg' },
-        { w: 'TXT', id: 'https://upload.wikimedia.org/wikipedia/commons/a/a8/Tomorrow_X_Together_at_a_Dior_event%2C_April_18%2C_2025.png' },    
-        { w: 'BABY MONSTER', id: 'https://upload.wikimedia.org/wikipedia/commons/5/57/BabyMonster_Promoting_drip_on_2024112.png' },
-        { w: 'BOYNEXTDOOR', id: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/BoyNextDoor_at_KCON_Japan_2024%2C_%2820240511%29.png' },
-        { w: 'ZEROBASEONE', id: 'https://upload.wikimedia.org/wikipedia/commons/b/be/230513_ZEROBASEONE_%28ZB1%29.jpg' },
-        { w: 'YOASOBI', id: 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Yoasobi_at_Gucci_Cosmos_Exhibition%2C_September_30%2C_2024.jpg' },
-        { w: 'ADO', id: 'Images/ADO.webp' },
-        { w: 'TWICE', id: 'https://upload.wikimedia.org/wikipedia/commons/2/22/Twice_-_Dickies_Arena%2C_2022_%28cropped%29.jpg' },
-        { w: 'BLACKPINK', id: 'https://upload.wikimedia.org/wikipedia/commons/f/f4/Blackpink_Pink_Carpet_Event_4.jpg' },
-        { w: 'STRAY KIDS', id: 'https://upload.wikimedia.org/wikipedia/commons/c/c0/Stray_Kids_in_2026.png' },
-        { w: 'Katy Perry', id: 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Katy_Perry_-_Part_Of_Me_Australian_Premiere_-_June_2012_%2810%29.jpg' },
-        { w: 'Shawn Mendes', id: 'https://upload.wikimedia.org/wikipedia/commons/b/b4/Shawn_Mendes_at_The_Queen%27s_Birthday_Party_%28cropped_2%29.jpg' },
-        { w: 'Michael Jackson', id: 'https://upload.wikimedia.org/wikipedia/commons/3/37/George_H._W._Bush_with_Michael_Jackson_%28cropped_2%29.png' },
-        { w: 'Demi Lovato', id: 'https://upload.wikimedia.org/wikipedia/commons/b/b9/Demi_Lovato_in_2017_cropped_01.jpg' },
-        { w: 'Maroon 5', id: 'https://upload.wikimedia.org/wikipedia/commons/1/19/Maroon_5%2C_2011.jpg' },
-        { w: 'KATSEYE', id: 'https://upload.wikimedia.org/wikipedia/commons/f/fe/%EC%BA%A3%EC%B8%A0%EC%95%84%EC%9D%B4%28KATSEYE%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B6%84%EC%9C%84%EA%B8%B0%EB%A1%9C_%EC%98%AC%ED%82%AC.jpg' },
-        { w: 'IShowSpeed', id: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/IShowSpeed_at_Chinatown_%28Portrait%29_04.jpg' },
-        { w: '(G)I-DLE', id: 'https://upload.wikimedia.org/wikipedia/commons/3/36/20241130_%28G%29I-dle_MMA_2024_Red_Carpet.jpg' },
-        { w: 'NEWJEANS', id: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/NewJeans_X_OLENS_1_%28cropped%29.jpg' },
-        { w: 'BTS', id: 'https://upload.wikimedia.org/wikipedia/commons/0/09/BTS_at_the_White_House_on_May_31%2C_2022_04.jpg' },
-        { w: 'CENTRAL CEE', id: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Central_cee-5.jpg' },
-        { w: 'TAYLOR SWIFT', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png/500px-Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png' },
-        { w: 'MEOVV', id: 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Meovv_250512.jpg' },
-        { w: 'ILLIT', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/%EC%95%84%EC%9D%BC%EB%A6%BF_%28ILLIT%29_%EA%B0%80%EC%9A%94%EA%B4%91%EC%9E%A5_%EC%B6%9C%EA%B7%BC%EA%B8%B8_%281%29.jpg' },
-        { w: 'THE WEEKND', id: 'https://upload.wikimedia.org/wikipedia/commons/9/95/The_Weeknd_Cannes_2023.png' },
-        { w: 'JAY CHOU', id: 'https://upload.wikimedia.org/wikipedia/commons/2/27/Jay_Chou_in_July_2019_%282%29.jpg' },
-        { w: 'MAYDAY', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/X06Taiwan_20061105-36.jpg/500px-X06Taiwan_20061105-36.jpg' },
-        { w: 'BILLIE EILISH', id: 'https://upload.wikimedia.org/wikipedia/commons/3/39/Billie_Eilish_2019_by_Glenn_Francis.jpg' },
-        { w: 'ARIANA GRANDE', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Ariana_Grande_interview_2016.png' },
-        { w: 'LE SSERAFIM', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%28LE_SSERAFIM%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B9%84%EC%A3%BC%EC%96%BC_%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4_LE_SSERAFIM_Music_Bank_%284K%29_03.png/640px-%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%28LE_SSERAFIM%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B9%84%EC%A3%BC%EC%96%BC_%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4_LE_SSERAFIM_Music_Bank_%284K%29_03.png' },
-        { w: 'ATEEZ', id: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Ateez_at_The_World_EP._2_Outlaw_Showcase.jpg' },
-        { w: 'DRAKE', id: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Drake_July_2016.jpg' },
-        { w: 'BRUNO MARS', id: 'https://upload.wikimedia.org/wikipedia/commons/a/af/Bruno_Mars_2010.jpg' },
-        { w: 'AESPA', id: 'https://upload.wikimedia.org/wikipedia/commons/5/57/Aespa_%28%EC%97%90%EC%8A%A4%ED%8C%8C%29_31st_HMA_2024_%284%29.png' },
-        { w: 'Lil Hao', id: 'Images\\Lil Hao.jpg' },
-        { w: 'Hiroyuki Sawano (澤野弘之)', id: 'Images\\Hiroyuki Sawano (澤野弘之).jpg' },
-        { w: 'IU', id: 'Images\\IU.jpg' },
-        { w: 'YENA', id: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/20241004_Choi_Yena_Music_Bank_2024_05.jpg' },
-        { w: 'Liu Yuning (劉宇寧)', id: 'https://upload.wikimedia.org/wikipedia/commons/0/03/Liu_Yuning_%E5%88%98%E5%AE%87%E5%AE%81_20191222_%E6%88%91%E4%BB%AC%E7%9A%84%E6%AD%8C2.jpg' },
-        { w: 'Jungkook (田柾國)', id: 'https://upload.wikimedia.org/wikipedia/commons/8/88/Jeon_Jung-kook_performing_%22Fake_Love%22_during_Love_Yourself_tour_in_Berlin%2C_16_October_2018_06.jpg' },
-        { w: 'Justin Bieber', id: 'https://upload.wikimedia.org/wikipedia/commons/d/da/Justin_Bieber_in_2015.jpg' },
-        { w: 'TOMORROW X TOGETHER', id: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Tomorrow_X_Together_at_a_Dior_event_in_2025_02.jpg' },
-        { w: 'ITZY', id: 'https://upload.wikimedia.org/wikipedia/commons/8/83/Itzy_230102.jpg' },
-        { w: 'MJ116 (頑童)', id: 'Images\\MJ116 (頑童).jpg' },
-        { w: 'Soft Lipa (蛋堡)', id: 'Images\\Soft Lipa (蛋堡).jpg' },
-        { w: 'Bestards (理想混蛋)', id: 'Images\\Bestards (理想混蛋).jpg' },
-        { w: 'Aden Wang (王Aden)', id: 'Images\\Aden Wang (王Aden).jpg' },
-        { w: '9m88', id: 'Images\\9m88.jpg' }
+        { w: 'SEVENTEEN', id: 'https://upload.wikimedia.org/wikipedia/commons/a/ac/SEVENTEEN%28%EC%84%B8%EB%B8%90%ED%8B%B4%29_-_%27Ready_to_love%27_%EC%9D%91%EC%9B%90%EB%B2%95_3m_25s.jpg', hint: 'K-pop group known for their synchronized choreography and self-produced music.' },
+        { w: 'TXT', id: 'https://upload.wikimedia.org/wikipedia/commons/a/a8/Tomorrow_X_Together_at_a_Dior_event%2C_April_18%2C_2025.png', hint: 'K-pop group known for their unique style and powerful performances.' },
+        { w: 'BABY MONSTER', id: 'https://upload.wikimedia.org/wikipedia/commons/5/57/BabyMonster_Promoting_drip_on_2024112.png', hint: 'K-pop girl group formed by YG Entertainment.' },
+        { w: 'BOYNEXTDOOR', id: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/BoyNextDoor_at_KCON_Japan_2024%2C_%2820240511%29.png', hint: 'K-pop boy group known for their versatile music and strong stage presence.' },
+        { w: 'ZEROBASEONE', id: 'https://upload.wikimedia.org/wikipedia/commons/b/be/230513_ZEROBASEONE_%28ZB1%29.jpg', hint: 'K-pop boy group formed by JYP Entertainment.' },
+        { w: 'YOASOBI', id: 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Yoasobi_at_Gucci_Cosmos_Exhibition%2C_September_30%2C_2024.jpg', hint: 'J-pop duo known for their unique sound and emotional lyrics.' },
+        { w: 'ADO', id: 'Images/ADO.webp', hint: 'Japanese singer-songwriter known for her unique vocal style.' },
+        { w: 'TWICE', id: 'https://upload.wikimedia.org/wikipedia/commons/2/22/Twice_-_Dickies_Arena%2C_2022_%28cropped%29.jpg', hint: 'K-pop girl group known for their catchy songs and energetic performances.' },
+        { w: 'BLACKPINK', id: 'https://upload.wikimedia.org/wikipedia/commons/f/f4/Blackpink_Pink_Carpet_Event_4.jpg', hint: 'K-pop girl group known for their powerful vocals and dynamic stage presence.' },
+        { w: 'STRAY KIDS', id: 'https://upload.wikimedia.org/wikipedia/commons/c/c0/Stray_Kids_in_2026.png', hint: 'K-pop boy group known for their innovative music and impressive choreography.' },
+        { w: 'Katy Perry', id: 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Katy_Perry_-_Part_Of_Me_Australian_Premiere_-_June_2012_%2810%29.jpg', hint: 'American singer-songwriter known for her pop hits and bold fashion choices.' },
+        { w: 'Shawn Mendes', id: 'https://upload.wikimedia.org/wikipedia/commons/b/b4/Shawn_Mendes_at_The_Queen%27s_Birthday_Party_%28cropped_2%29.jpg', hint: 'Canadian singer-songwriter known for his heartfelt ballads and smooth vocals.' },
+        { w: 'Michael Jackson', id: 'https://upload.wikimedia.org/wikipedia/commons/3/37/George_H._W._Bush_with_Michael_Jackson_%28cropped_2%29.png', hint: 'American singer, songwriter, and dancer known as the "King of Pop".' },
+        { w: 'Demi Lovato', id: 'https://upload.wikimedia.org/wikipedia/commons/b/b9/Demi_Lovato_in_2017_cropped_01.jpg', hint: 'American singer and actress known for her powerful voice and candid personality.' },
+        { w: 'Maroon 5', id: 'https://upload.wikimedia.org/wikipedia/commons/1/19/Maroon_5%2C_2011.jpg', hint: 'American pop rock band known for their radio-friendly hits and charismatic frontman.' },
+        { w: 'KATSEYE', id: 'https://upload.wikimedia.org/wikipedia/commons/f/fe/%EC%BA%A3%EC%B8%A0%EC%95%84%EC%9D%B4%28KATSEYE%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B6%84%EC%9C%84%EA%B8%B0%EB%A1%9C_%EC%98%AC%ED%82%AC.jpg', hint: 'K-pop girl group formed by SM Entertainment.' },
+        { w: 'IShowSpeed', id: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/IShowSpeed_at_Chinatown_%28Portrait%29_04.jpg', hint: 'K-pop boy group known for their unique style and impressive dance skills.' },
+        { w: '(G)I-DLE', id: 'https://upload.wikimedia.org/wikipedia/commons/3/36/20241130_%28G%29I-dle_MMA_2024_Red_Carpet.jpg', hint: 'K-pop girl group known for their empowering messages and dynamic performances.' },
+        { w: 'NEWJEANS', id: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/NewJeans_X_OLENS_1_%28cropped%29.jpg', hint: 'K-pop girl group known for their minimalist style and catchy hooks.' },
+        { w: 'BTS', id: 'https://upload.wikimedia.org/wikipedia/commons/0/09/BTS_at_the_White_House_on_May_31%2C_2022_04.jpg', hint: 'K-pop boy group known for their social activism and global influence.' },
+        { w: 'CENTRAL CEE', id: 'https://upload.wikimedia.org/wikipedia/commons/3/30/Central_cee-5.jpg', hint: 'British rapper known for his distinctive flow and lyrical prowess.' },
+        { w: 'TAYLOR SWIFT', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png/500px-Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png', hint: 'American singer-songwriter known for her storytelling and acoustic sound.' },
+        { w: 'MEOVV', id: 'https://upload.wikimedia.org/wikipedia/commons/c/c9/Meovv_250512.jpg', hint: 'K-pop girl group known for their powerful vocals and dynamic performances.' },
+        { w: 'ILLIT', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/%EC%95%84%EC%9D%BC%EB%A6%BF_%28ILLIT%29_%EA%B0%80%EC%9A%94%EA%B4%91%EC%9E%A5_%EC%B6%9C%EA%B7%BC%EA%B8%B8_%281%29.jpg', hint: 'K-pop girl group known for their cute image and catchy songs.' },
+        { w: 'THE WEEKND', id: 'https://upload.wikimedia.org/wikipedia/commons/9/95/The_Weeknd_Cannes_2023.png', hint: 'Canadian singer-songwriter known for his R&B-influenced sound and dark aesthetic.' },
+        { w: 'JAY CHOU', id: 'https://upload.wikimedia.org/wikipedia/commons/2/27/Jay_Chou_in_July_2019_%282%29.jpg', hint: 'Taiwanese singer-songwriter known for his unique blend of pop, rock, and traditional Chinese music.' },
+        { w: 'MAYDAY', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/X06Taiwan_20061105-36.jpg/500px-X06Taiwan_20061105-36.jpg', hint: 'Taiwanese rock band known for their energetic performances and socially conscious lyrics.' },
+        { w: 'BILLIE EILISH', id: 'https://upload.wikimedia.org/wikipedia/commons/3/39/Billie_Eilish_2019_by_Glenn_Francis.jpg', hint: 'American singer-songwriter known for her unique vocal style and dark, atmospheric sound.' },
+        { w: 'ARIANA GRANDE', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Ariana_Grande_interview_2016.png', hint: 'American singer and actress known for her powerful vocals and wide vocal range.' },
+        { w: 'LE SSERAFIM', id: 'https://upload.wikimedia.org/wikipedia/commons/6/61/221127_LE_SSERAFIM_%28%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%29_Airport_Departure.jpg' },
+        { w: 'Lil Hao', id: 'Images/Lil Hao.jpg' , hint: 'Chinese rapper known for his unique style and lyrical prowess.' },
+        { w: 'Hiroyuki Sawano', id: 'Images/Hiroyuki Sawano (澤野弘之).jpg' , hint: 'Japanese composer known for his work on anime soundtracks and dramatic orchestral pieces.' },
+        { w: 'IU', id: 'Images/IU.jpg' , hint: 'South Korean singer-songwriter known for her sweet vocals and heartfelt lyrics.' },
+        { w: 'YENA', id: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/20241004_Choi_Yena_Music_Bank_2024_05.jpg', hint: 'South Korean singer-songwriter known for her powerful vocals and dynamic performances.' },
+        { w: 'Liu Yuning', id: 'https://upload.wikimedia.org/wikipedia/commons/0/03/Liu_Yuning_%E5%88%98%E5%AE%87%E5%AE%81_20191222_%E6%88%91%E4%BB%AC%E7%9A%84%E6%AD%8C2.jpg', hint: 'Chinese singer-songwriter known for his versatile voice and emotional performances.' },
+        { w: 'Jungkook', id: 'https://upload.wikimedia.org/wikipedia/commons/8/88/Jeon_Jung-kook_performing_%22Fake_Love%22_during_Love_Yourself_tour_in_Berlin%2C_16_October_2018_06.jpg', hint: 'South Korean singer and dancer known for his impressive vocal range and stage presence.' },
+        { w: 'Justin Bieber', id: 'https://upload.wikimedia.org/wikipedia/commons/d/da/Justin_Bieber_in_2015.jpg', hint: 'Canadian singer-songwriter known for his pop hits and charismatic personality.' },
+        { w: 'TOMORROW X TOGETHER', id: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Tomorrow_X_Together_at_a_Dior_event_in_2025_02.jpg', hint: 'K-pop boy group known for their unique style and impressive dance skills.' },
+        { w: 'ITZY', id: 'https://upload.wikimedia.org/wikipedia/commons/8/83/Itzy_230102.jpg', hint: 'K-pop girl group known for their energetic performances and catchy songs.' },
+        { w: 'MJ116', id: 'Images/MJ116 (頑童).jpg' , hint: 'Chinese hip-hop group known for their innovative style and social commentary.' },
+        { w: 'Soft Lipa', id: 'Images/Soft Lipa (蛋堡).jpg' , hint: 'Chinese rapper and songwriter known for his unique flow and lyrical prowess.' },
+        { w: 'Bestards', id: 'Images/Bestards (理想混蛋).jpg' , hint: 'Chinese rock band known for their rebellious spirit and socially conscious lyrics.' },
+        { w: 'Aden Wang', id: 'Images/Aden Wang (王Aden).jpg' , hint: 'Chinese singer-songwriter known for his emotional depth and melodic sensibility.' },
+        { w: '9m88', id: 'Images/9m88.jpg' , hint: 'Chinese rapper known for his aggressive style and powerful delivery.' }
         ];
 
         let cards = [], flipped = [], locked = false;
 
         function init() {
             const grid = document.getElementById('grid');
-            // Select 8 artists, duplicate to make 16 cards
-            const selected = ARTIST_DATA.sort(() => Math.random() - 0.5).slice(0, 8);
+            
+            // Select 20 unique artists, duplicate them to make 40 cards total
+            const selected = ARTIST_DATA.sort(() => Math.random() - 0.5).slice(0, 20);
             cards = [...selected, ...selected].sort(() => Math.random() - 0.5);
             
             cards.forEach((item, index) => {
@@ -97,7 +127,7 @@
                 card.className = 'memory-card';
                 card.dataset.name = item.w;
                 card.innerHTML = `
-                    <div class="card-face card-front">🎵</div>
+                    <div class="card-face card-front shadow-lg">🎵</div>
                     <div class="card-face card-back" style="background-image: url('${item.id}')"></div>
                 `;
                 card.onclick = () => flip(card);
