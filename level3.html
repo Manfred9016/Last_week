@@ -4,11 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Guess the Artist - Level 3</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: #f0f4f8;
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: #e2e8f0;
       text-align: center;
       -webkit-tap-highlight-color: transparent;
       margin: 0;
@@ -16,52 +18,51 @@
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      overflow-x: hidden;
     }
-    h1 {
-      margin-bottom: 10px;
-      color: #1e293b;
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    h2 {
-      margin-top: 0;
-      margin-bottom: 20px;
-      color: #475569;
-      font-weight: bold;
-    }
+    
     .game-wrapper {
       padding: 20px;
       flex-grow: 1;
+      position: relative;
+      z-index: 10;
     }
     .game-container {
       max-width: 600px;
       margin: 0 auto;
-      background: white;
       padding: 2rem;
       border-radius: 1rem;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
     .options-container {
       list-style: none;
       padding: 0;
       margin: 0;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive Grid */
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 15px;
     }
     .artist-option {
       height: 84px;
       box-sizing: border-box;
-      background-color: white;
+      background: rgba(255, 255, 255, 0.05);
       padding: 10px;
-      border: 2px solid #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 8px;
       display: flex;
       align-items: center;
       gap: 15px;
       cursor: pointer;
-      transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out, transform 0.1s ease;
+      transition: all 0.2s ease-in-out;
     }
     .artist-option:hover {
-        border-color: #94a3b8;
+        border-color: #06b6d4;
+        box-shadow: 0 0 15px rgba(6,182,212,0.3);
     }
     .artist-option.selected {
         transform: scale(1.02);
@@ -72,29 +73,32 @@
       border-radius: 50%;
       object-fit: cover;
       pointer-events: none;
-      background-color: #eee;
+      background-color: #1a1a2e;
     }
     .artist-label {
       flex-grow: 1;
       text-align: left;
       pointer-events: none;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 16px;
-      color: #334155;
+      color: #fff;
     }
 
     /* Feedback Styles */
     .artist-option.correct {
-      border-color: #22c55e;
-      background-color: #dcfce7;
+      border-color: #34d399;
+      background: rgba(52, 211, 153, 0.2);
+      box-shadow: 0 0 15px rgba(52, 211, 153, 0.5);
     }
     .artist-option.incorrect {
-      border-color: #ef4444;
-      background-color: #fee2e2;
+      border-color: #f43f5e;
+      background: rgba(244, 63, 94, 0.2);
+      box-shadow: 0 0 15px rgba(244, 63, 94, 0.5);
     }
     .options-container.disabled .artist-option:not(.selected) {
-        opacity: 0.6;
+        opacity: 0.4;
         cursor: not-allowed;
+        pointer-events: none;
     }
     .options-container.disabled .artist-option.correct {
         opacity: 1;
@@ -103,78 +107,66 @@
     .button-group {
       margin-top: 30px;
     }
-    .button-group button {
-      padding: 12px 25px;
-      font-size: 18px;
-      cursor: pointer;
-      border-radius: 8px;
-      border: none;
-      background-color: #3b82f6;
-      color: white;
-      font-weight: 600;
-      transition: background-color 0.2s;
-    }
-    .button-group button:hover {
-      background-color: #2563eb;
-    }
-    .button-group button:disabled {
-      background-color: #9ca3af;
-      cursor: not-allowed;
-    }
     #result-container {
         margin-top: 20px;
-        font-size: 24px;
-        font-weight: bold;
-        color: #1e293b;
-        min-height: 36px;
+        font-size: 28px;
+        font-weight: 900;
+        min-height: 40px;
+        text-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
     #final-feedback-container {
         margin-top: 20px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: 15px;
     }
     #final-feedback-container img {
         max-width: 100%;
         height: auto;
-        border-radius: 8px;
-        max-height: 200px;
+        border-radius: 12px;
+        max-height: 250px;
         object-fit: contain;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
     #final-feedback-caption {
-        font-size: 1.2em;
-        font-weight: bold;
-        color: #1e293b;
+        font-size: 1.5em;
+        font-weight: 900;
+        color: #fff;
+        text-shadow: 0 0 10px #ec4899;
     }
   </style>
 </head>
 <body>
 
+  <!-- Ambient Lights -->
+  <div class="fixed top-0 left-1/4 w-96 h-96 bg-pink-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse pointer-events-none z-0"></div>
+  <div class="fixed bottom-0 right-1/4 w-96 h-96 bg-cyan-600 rounded-full mix-blend-multiply filter blur-[128px] opacity-40 animate-pulse pointer-events-none z-0"></div>
+
   <!-- Shared Navigation -->
-  <nav class="bg-gray-900 border-b border-pink-500 p-4">
-    <div class="max-w-4xl mx-auto flex flex-wrap justify-center gap-4 text-sm font-bold">
-        <a href="index.html" class="text-gray-400 hover:text-white transition">LVL 1: Reveal</a>
-        <a href="level2.html" class="text-gray-400 hover:text-white transition">LVL 2: Unjumble</a>
-        <span class="text-pink-400 border-b-2 border-pink-400">LVL 3: Ranking</span>
-        <a href="level4.html" class="text-gray-400 hover:text-white transition">LVL 4: Memory</a>
-        <a href="level5.html" class="text-gray-400 hover:text-white transition">LVL 5: Puzzle</a>
+  <nav class="glass sticky top-0 z-50 p-4 shadow-2xl">
+    <div class="max-w-4xl mx-auto flex flex-wrap justify-center gap-6 text-sm font-bold tracking-widest uppercase">
+        <a href="index.html" class="text-gray-400 hover:text-cyan-400 transition pb-1">LVL 1: Reveal</a>
+        <a href="level2.html" class="text-gray-400 hover:text-cyan-400 transition pb-1">LVL 2: Unjumble</a>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 border-b-2 border-pink-500 pb-1">LVL 3: Ranking</span>
+        <a href="level4.html" class="text-gray-400 hover:text-cyan-400 transition pb-1">LVL 4: Memory</a>
+        <a href="level5.html" class="text-gray-400 hover:text-cyan-400 transition pb-1">LVL 5: Puzzle</a>
     </div>
   </nav>
 
   <div class="game-wrapper">
-    <div class="game-container">
-      <h1 class="text-3xl font-bold">Guess the Artist Rank</h1>
-      <h2 id="question-text" class="text-xl">Loading...</h2>
+    <div class="game-container glass">
+      <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500 tracking-widest uppercase mb-4 drop-shadow-md">Guess the Rank</h1>
+      <h2 id="question-text" class="text-2xl text-purple-300 font-bold tracking-wider drop-shadow">Loading...</h2>
       
-      <ul id="options-list" class="options-container">
-        </ul>
+      <ul id="options-list" class="options-container mt-6">
+      </ul>
 
       <div id="result-container"></div>
       <div id="final-feedback-container"></div>
 
       <div class="button-group">
-        <button id="next-button" onclick="nextQuestion()" disabled>Next</button>
+        <button id="next-button" onclick="nextQuestion()" disabled class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 disabled:from-gray-600 disabled:to-gray-700 font-black py-3 px-10 rounded-full uppercase transition transform hover:scale-105 shadow-[0_0_15px_rgba(6,182,212,0.4)] tracking-widest text-lg">Next 🎵</button>
       </div>
     </div>
   </div>
@@ -211,7 +203,7 @@
         { w: 'MAYDAY', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/X06Taiwan_20061105-36.jpg/500px-X06Taiwan_20061105-36.jpg' },
         { w: 'BILLIE EILISH', id: 'https://upload.wikimedia.org/wikipedia/commons/3/39/Billie_Eilish_2019_by_Glenn_Francis.jpg' },
         { w: 'ARIANA GRANDE', id: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Ariana_Grande_interview_2016.png' },
-        { w: 'LE SSERAFIM', id: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%28LE_SSERAFIM%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B9%84%EC%A3%BC%EC%96%BC_%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4_LE_SSERAFIM_Music_Bank_%284K%29_03.png/640px-%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%28LE_SSERAFIM%29_%EB%AE%A4%EC%A7%81%EB%B1%85%ED%81%AC_%EC%B6%9C%EA%B7%BC%EA%B8%B8%2C_%EB%B9%84%EC%A3%BC%EC%96%BC_%ED%8C%8C%EB%9D%BC%EB%8B%A4%EC%9D%B4%EC%8A%A4_LE_SSERAFIM_Music_Bank_%284K%29_03.png' },
+        { w: 'LE SSERAFIM', id: 'https://upload.wikimedia.org/wikipedia/commons/6/61/221127_LE_SSERAFIM_%28%EB%A5%B4%EC%84%B8%EB%9D%BC%ED%95%8C%29_Airport_Departure.jpg' },
         { w: 'ATEEZ', id: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Ateez_at_The_World_EP._2_Outlaw_Showcase.jpg' },
         { w: 'DRAKE', id: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Drake_July_2016.jpg' },
         { w: 'BRUNO MARS', id: 'https://upload.wikimedia.org/wikipedia/commons/a/af/Bruno_Mars_2010.jpg' },
@@ -273,7 +265,6 @@
         const correctArtist = ARTIST_DATA[currentIdx];
         
         // --- GAME MODE: RANKING (Sequential) ---
-        // Questions will appear in the exact order of the list: NF -> Baby Monster -> etc.
         questionEl.innerHTML = `Which artist is Rank #${currentIdx + 1}?`;
 
         // Get 5 random distractors (unique)
@@ -309,12 +300,14 @@
         if (selectedName === correctName) {
           score++;
           selectedOption.classList.add('correct');
-          resultContainer.textContent = 'Correct!';
-          resultContainer.style.color = '#166534';
+          resultContainer.textContent = 'Correct! 🔥';
+          resultContainer.style.color = '#34d399';
+          resultContainer.style.textShadow = '0 0 15px rgba(52,211,153,0.6)';
         } else {
           selectedOption.classList.add('incorrect');
-          resultContainer.textContent = 'Incorrect!';
-          resultContainer.style.color = '#991b1b';
+          resultContainer.textContent = 'Incorrect! 💔';
+          resultContainer.style.color = '#f43f5e';
+          resultContainer.style.textShadow = '0 0 15px rgba(244,63,94,0.6)';
           
           // Highlight correct one
           const correctEl = optionsList.querySelector(`[data-name="${correctName}"]`);
@@ -328,7 +321,7 @@
         if(currentIdx === ARTIST_DATA.length - 1){
             nextButton.textContent = "See Score";
         } else {
-            nextButton.textContent = "Next";
+            nextButton.textContent = "Next 🎵";
         }
       }
 
@@ -356,7 +349,7 @@
         finalFeedbackContainer.innerHTML = `
             <img src="${finalImageSrc}" alt="Final Score">
             <div id="final-feedback-caption">${finalCaption}</div>
-            <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; cursor:pointer; background:#3b82f6; color:white; border:none; border-radius:8px;">Play Again</button>
+            <button class="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-black py-4 px-10 rounded-full uppercase tracking-widest mt-6 transform transition hover:scale-105 shadow-[0_0_20px_rgba(236,72,153,0.5)]" onclick="location.reload()">Play Again</button>
         `;
       }
 
